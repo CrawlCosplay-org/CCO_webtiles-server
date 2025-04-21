@@ -51,7 +51,7 @@ template_game = {
     "rcfile_path": "%%CHROOT_RCFILESDIR%%/crawl-{}/",
     "macro_path": "%%CHROOT_RCFILESDIR%%/crawl-{}/",
     "morgue_path": "%%CHROOT_MORGUEDIR%%/%n/",
-    "morgue_url": "CONFIG_MORGUE_URL",
+    "morgue_url": "data.crawlcosplay.org",
     "inprogress_path": "%%CHROOT_INPROGRESSDIR%%/crawl-{}/",
     "ttyrec_path": "%%CHROOT_TTYRECDIR%%/%n/",
     "socket_path": "%%CHROOT_WEBDIR%%/sockets",
