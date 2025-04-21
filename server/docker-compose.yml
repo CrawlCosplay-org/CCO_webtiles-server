@@ -1,4 +1,17 @@
 services:
+  caddy:
+    image: caddy:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /data/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - /data/caddy/data:/data 
+      - /data/caddy/config:/config
+    networks:
+      - web
+      - internal
   dcss-server:
     image: refracta/dcss-server:latest
     tty: true
