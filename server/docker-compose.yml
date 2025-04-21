@@ -30,3 +30,9 @@ services:
       - GH_TOKEN
     networks:
       - internal
+networks:
+  web:
+    external: true
+  internal:
+    external: false
+    driver: bridge
