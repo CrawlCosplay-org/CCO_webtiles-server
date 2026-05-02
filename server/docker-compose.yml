@@ -1,30 +1,138 @@
+name: server
+configs:
+  caddy-basic-content:
+    file: ./Caddyfile
+    labels:
+      caddy:
+
+volumes:
+  caddy_data: {}
+  
 services:
-  dcss-server:
-    image: refracta/dcss-server:latest
-    tty: true
-    stdin_open: true
-    build:
-      context: ../
-      dockerfile: server/Dockerfile
-    ports:
-      - "0:22"
-      - "0:8022"
-      - "0:8080"
-      - "0:8081"
-      - "0:8082"
+  dozzle-agent:
+    image: amir20/dozzle:latest
+    command: agent
     volumes:
-      - ./data/logs:/home/crawl-dev/logs
-      - ./data/config:/home/crawl-dev/dgamelaunch-config
-      - ./data/versionsdb:/versionsdb
-      - ./data/crawl-master:/crawl-master
-      - ./data/dgldir:/dgldir
-      - ./data/games:/usr/games
-      - ./data/ccache:/root/.cache/ccache
-      - ./data/ssh-keys:/etc/ssh/keys
-      - ./data/:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - 7007:7007
+    networks:
+      web: null
+  anubis_data:
+    volumes:
+      - ./botPolicies.yml:/data/botPolicies.yml:ro
     environment:
-      - CMD
-      - USE_REVERSE_PROXY
-      - USE_DWEM
-      - USE_CNC_CONFIG
-      - GH_TOKEN
+      BIND: :4001
+      TARGET: http://dcss-server:8082
+      SLOG_LEVEL: DEBUG
+      POLICY_FNAME: "/data/botPolicies.yml"
+    image: ghcr.io/techarohq/anubis:latest
+    networks:
+      internal: null
+    pull_policy: always
+  caddy:
+    image: caddy:alpine
+    networks:
+      internal: null
+      web: null
+    ports:
+      - mode: ingress
+        target: 80
+        published: "80"
+        protocol: tcp
+      - mode: ingress
+        target: 443
+        published: "443"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - caddy_data:/data
+      - ./Caddyfile:/etc/caddy/Caddyfile
+  dcss-server:
+    build:
+      context: /root/ext_vol/dcss-server
+      dockerfile: server/Dockerfile
+    environment:
+      CMD: null
+      GH_TOKEN: null
+      USE_DWEM: null
+      USE_REVERSE_PROXY: null
+    networks:
+      internal: null
+    ports:
+      - mode: ingress
+        target: 22
+        published: "12222"
+        protocol: tcp
+      - mode: ingress
+        target: 8022
+        published: "8022"
+        protocol: tcp
+      - mode: ingress
+        target: 8080
+        published: "8080"
+        protocol: tcp
+      - mode: ingress
+        target: 8081
+        published: "8081"
+        protocol: tcp
+      - mode: ingress
+        target: 8082
+        published: "8082"
+        protocol: tcp
+    stdin_open: true
+    tty: true
+    volumes:
+      - type: bind
+        source: /root/ext_vol/dcss-server/server/data/logs
+        target: /home/crawl-dev/logs
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /root/ext_vol/dcss-server/server/data/config
+        target: /home/crawl-dev/dgamelaunch-config
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /root/ext_vol/dcss-server/server/data/versionsdb
+        target: /versionsdb
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /root/ext_vol/dcss-server/server/data/crawl-master
+        target: /crawl-master
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /root/ext_vol/dcss-server/server/data/dgldir
+        target: /dgldir
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /root/ext_vol/dcss-server/server/data/games
+        target: /usr/games
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /root/ext_vol/dcss-server/server/data/ccache
+        target: /root/.cache/ccache
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /root/ext_vol/dcss-server/server/data/ssh-keys
+        target: /etc/ssh/keys
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /root/ext_vol/dcss-server/server/data
+        target: /data
+        bind:
+          create_host_path: true
+networks:
+  internal:
+    name: server_internal
+    driver: bridge
+  web:
+    name: web
+    external: true
